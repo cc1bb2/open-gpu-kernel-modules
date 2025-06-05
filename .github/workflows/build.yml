@@ -19,8 +19,8 @@ jobs:
           branch=${branch/-p2p/}
           version=$(echo $branch | cut -d'.' -f1)
           # download source deb
-          echo "Downloading nvidia-kernel-source-${version}-open_${branch}-0ubuntu1_amd64.deb"
-          curl -o source.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/nvidia-kernel-source-${version}-open_${branch}-0ubuntu1_amd64.deb
+          echo "Downloading nvidia-kernel-source-${version}-open_${branch}-1ubuntu1_amd64.deb"
+          curl -o source.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/nvidia-kernel-source-${version}-open_${branch}-1ubuntu1_amd64.deb
       - name: Extract source deb
         run: dpkg-deb -R source.deb source-deb
       - name: Build kernel module
@@ -46,13 +46,13 @@ jobs:
           branch=$(echo $GITHUB_REF | cut -d'/' -f3)
           branch=${branch/-p2p/}
           version=$(echo $branch | cut -d'.' -f1)
-          dpkg-deb -b source-deb nvidia-kernel-source-${version}-open-0ubuntu1_amd64.deb
+          dpkg-deb -b source-deb nvidia-kernel-source-${version}-open-1ubuntu1_amd64.deb
       - name: Generate artifact name
         run: |
           branch=$(echo $GITHUB_REF | cut -d'/' -f3)
           branch=${branch/-p2p/}
           version=$(echo $branch | cut -d'.' -f1)
-          echo "artifact_name=nvidia-kernel-source-${version}-open-0ubuntu1_amd64.deb" >> $GITHUB_ENV
+          echo "artifact_name=nvidia-kernel-source-${version}-open-1ubuntu1_amd64.deb" >> $GITHUB_ENV
       - name: Upload deb
         uses: actions/upload-artifact@v4
         with:
