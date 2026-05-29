@@ -9,9 +9,13 @@ This allows using GDR on 4080 GPUs with the 570.148.08-p2p driver version.
 3) Reboot
 
 
-Sample ib_write_bw output:
+## Sample ib_write_bw output:
 
+```
 ./ib_write_bw -d mlx5_0 --use_cuda=0
+```
+
+```
 
 Perftest doesn't supports CUDA tests with inline messages: inline size set to 0
 
@@ -51,3 +55,4 @@ allocated GPU buffer of a 131072 address at 0x5af3874d4fb0 for type CUDA_MEM_DEV
 ---------------------------------------------------------------------------------------
 deallocating GPU buffer 00007255bb400000
 destroying current CUDA Ctx
+```
