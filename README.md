@@ -1,7 +1,6 @@
-# NVIDIA driver 570.148.08 with P2P for 4090
+# NVIDIA driver 570.148.08-p2p with GPUDirect RDMA for 4080
 
-This allows using P2P on 4090/5090 GPUs with the 570.148.08 driver version.
-See https://github.com/tinygrad/open-gpu-kernel-modules for more info.
+This allows using GDR on 4080 GPUs with the 570.148.08-p2p driver version.
 
 ## How to Build
 

@@ -789,7 +789,7 @@ _kbifInitRegistryOverrides
     }
 
     // Peer Mapping override
-    pKernelBif->peerMappingOverride = NV_REG_STR_PEERMAPPING_OVERRIDE_DEFAULT;
+    pKernelBif->peerMappingOverride = 1;
     if (osReadRegistryDword(pGpu, NV_REG_STR_PEERMAPPING_OVERRIDE, &data32) == NV_OK)
     {
         NV_PRINTF(LEVEL_INFO, "allow peermapping reg key = %d\n", data32);

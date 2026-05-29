@@ -1419,3 +1419,27 @@ kbusGetGpuFbPhysAddressForRdma_IMPL
 
     return NV_OK;
 }
+
+/**
+ * @brief Get GPU PF BAR1 SPA for AD10x (Ada Lovelace) GPUs
+ *
+ * AD10x (RTX 40xx) GPUs lack the GSP firmware RPC handler for
+ * NV2080_CTRL_CMD_INTERNAL_GPU_GET_PF_BAR1_SPA (which is only available
+ * on GB100+ Blackwell). For bare-metal and same-VM passthrough setups,
+ * the PCI BAR1 base address IS the SPA.
+ *
+ * @param[in]  pGpu       OBJGPU pointer
+ * @param[in]  pKernelBus KernelBus pointer
+ * @param[out] pSpaValue  SPA of GPU PF BAR1
+ */
+NV_STATUS
+kbusGetPFBar1Spa_AD102
+(
+    OBJGPU      *pGpu,
+    KernelBus   *pKernelBus,
+    NvU64       *pSpaValue
+)
+{
+    *pSpaValue = pKernelBus->bar1[GPU_GFID_PF].physAddr;
+    return NV_OK;
+}

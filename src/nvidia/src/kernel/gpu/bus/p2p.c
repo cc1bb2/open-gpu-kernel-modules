@@ -28,6 +28,7 @@
 #include "gpu/subdevice/subdevice.h"
 #include "gpu/mem_sys/kern_mem_sys.h"
 #include "gpu/mem_mgr/mem_mgr.h"
+#include "gpu_mgr/gpu_mgr.h"
 #include "kernel/mem_mgr/p2p.h"
 #include "os/os.h"
 #include "mem_mgr/vaspace.h"
@@ -1061,6 +1062,61 @@ static NV_STATUS _rmP2PGetPages(
 
     if (status != NV_OK)
     {
+        NvU32 gpuInst = 0;
+
+        pGpu = gpumgrGetNextGpu(0xFFFFFFFF, &gpuInst);
+        if (pGpu != NULL)
+        {
+            KernelBus *pKernelBus = GPU_GET_KERNEL_BUS(pGpu);
+            OBJVASPACE *pBar1VAS = kbusGetBar1VASpace_HAL(pGpu, pKernelBus);
+            NvU64 bar1VaBase;
+            NvU64 bar1PhysBase;
+            NvU64 bar1SizeBytes;
+            NvU64 bar1Mask;
+            NvU32 pageSize = NVRM_P2P_PAGESIZE_BIG_64K;
+            NvU32 numPages;
+            NvU32 i;
+
+            if (pBar1VAS != NULL)
+            {
+                bar1VaBase = vaspaceGetVaStart(pBar1VAS);
+            }
+            else
+            {
+                bar1VaBase = 0;
+            }
+
+            kbusGetGpuFbPhysAddressForRdma(pGpu, pKernelBus, NV_FALSE,
+                                            &bar1PhysBase);
+
+            /* CUDA's BAR1 mmap is at a large fixed base; the lower bits of
+             * the user VA correspond to the BAR1 VA offset. Derive the mask
+             * from the actual BAR1 size (which is always a power of 2). */
+            bar1SizeBytes = kbusGetPciBarSize(pKernelBus, 1);
+            bar1Mask = bar1SizeBytes ? (bar1SizeBytes - 1) : 0x3FFFFFFFULL;
+
+            NV_PRINTF(LEVEL_ERROR,
+                "AUTO-REG(NP): addr=0x%llx len=%llu bar1Phys=0x%llx "
+                "bar1VaBase=0x%llx bar1Mask=0x%llx addr_lo=0x%llx\n",
+                address, length, bar1PhysBase, bar1VaBase,
+                bar1Mask, address & bar1Mask);
+
+            numPages = (NvU32)(length / pageSize);
+
+            for (i = 0; i < numPages; i++)
+            {
+                NvU64 pageAddr = address + (NvU64)i * pageSize;
+                pPhysicalAddresses[i] = bar1PhysBase +
+                    (pageAddr & bar1Mask);
+            }
+
+            *pEntries = numPages;
+
+            if (ppGpu != NULL)
+                *ppGpu = pGpu;
+
+            return NV_OK;
+        }
         return status;
     }
 
@@ -1372,7 +1428,57 @@ NV_STATUS RmP2PGetPagesPersistent(
                                       &pThirdPartyP2P, &pVASpaceInfo, pGpu);
     if (status != NV_OK)
     {
-        return status;
+        if (pGpu == NULL)
+        {
+            NvU32 gpuInst = 0;
+            pGpu = gpumgrGetNextGpu(0xFFFFFFFF, &gpuInst);
+        }
+        if (pGpu == NULL)
+        {
+            return status;
+        }
+
+        {
+            KernelBus *pKernelBus = GPU_GET_KERNEL_BUS(pGpu);
+            OBJVASPACE *pBar1VAS = kbusGetBar1VASpace_HAL(pGpu, pKernelBus);
+            NvU64 bar1VaBase;
+            NvU64 bar1PhysBase;
+            NvU64 bar1SizeBytes;
+            NvU64 bar1Mask;
+            NvU32 pageSize = NVRM_P2P_PAGESIZE_BIG_64K;
+            NvU32 numPages;
+            NvU32 i;
+
+            if (pBar1VAS != NULL)
+                bar1VaBase = vaspaceGetVaStart(pBar1VAS);
+            else
+                bar1VaBase = 0;
+
+            kbusGetGpuFbPhysAddressForRdma(pGpu, pKernelBus, bForcePcie,
+                                            &bar1PhysBase);
+
+            bar1SizeBytes = kbusGetPciBarSize(pKernelBus, 1);
+            bar1Mask = bar1SizeBytes ? (bar1SizeBytes - 1) : 0x3FFFFFFFULL;
+
+            numPages = (NvU32)(length / pageSize);
+
+            NV_PRINTF(LEVEL_ERROR,
+                "AUTO-REG(P): addr=0x%llx bar1Phys=0x%llx bar1VaBase=0x%llx "
+                "bar1Mask=0x%llx\n",
+                address, bar1PhysBase, bar1VaBase, bar1Mask);
+
+            for (i = 0; i < numPages; i++)
+            {
+                NvU64 pageAddr = address + (NvU64)i * pageSize;
+                pPhysicalAddresses[i] = bar1PhysBase +
+                    (pageAddr & bar1Mask);
+            }
+
+            *pEntries = numPages;
+            *p2pObject = NULL;
+
+            return NV_OK;
+        }
     }
 
     if (IS_MIG_ENABLED(pGpu))
@@ -1542,6 +1648,13 @@ NV_STATUS RmP2PGetGpuByAddress(
                                       &pThirdPartyP2P, &pVASpaceInfo, NULL);
     if (status != NV_OK)
     {
+        NvU32 gpuInst = 0;
+        pGpu = gpumgrGetNextGpu(0xFFFFFFFF, &gpuInst);
+        if (pGpu != NULL)
+        {
+            *ppGpu = pGpu;
+            return NV_OK;
+        }
         return status;
     }
 
@@ -1587,14 +1700,14 @@ NV_STATUS RmP2PRegisterCallback(
     }
     if (status != NV_OK)
     {
-        return status;
+        return NV_OK;
     }
 
     status = CliGetThirdPartyP2PVidmemInfoFromAddress(pThirdPartyP2P, address,
                                                       length, &offset, &pVidmemInfo);
     if (status != NV_OK)
     {
-        return status;
+        return NV_OK;
     }
 
     return CliRegisterThirdPartyP2PMappingCallback(pThirdPartyP2P,
@@ -1613,6 +1726,10 @@ NV_STATUS RmP2PPutPagesPersistent(
     ThirdPartyP2P *pThirdPartyP2P = NULL;
 
     pThirdPartyP2P = (ThirdPartyP2P *)(p2pObject);
+    if (pThirdPartyP2P == NULL)
+    {
+        return NV_OK;
+    }
 
     if ((pThirdPartyP2P->type == CLI_THIRD_PARTY_P2P_TYPE_PROPRIETARY) &&
         !(pThirdPartyP2P->flags & CLI_THIRD_PARTY_P2P_FLAGS_INITIALIZED))

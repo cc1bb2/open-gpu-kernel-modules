@@ -1385,7 +1385,7 @@ static void __nvoc_init_funcTable_KernelBus_1(KernelBus *pThis, RmHalspecOwner *
         pThis->__kbusGetEccCounts__ = &kbusGetEccCounts_4a4dee;
     }
 
-    // kbusGetPFBar1Spa -- halified (3 hals) body
+    // kbusGetPFBar1Spa -- halified (4 hals) body
     if (( ((rmVariantHal_HalVarIdx >> 5) == 0UL) && ((1UL << (rmVariantHal_HalVarIdx & 0x1f)) & 0x00000001UL) )) /* RmVariantHal: VF */ 
     {
         pThis->__kbusGetPFBar1Spa__ = &kbusGetPFBar1Spa_46f6a7;
@@ -1396,6 +1396,10 @@ static void __nvoc_init_funcTable_KernelBus_1(KernelBus *pThis, RmHalspecOwner *
             ( ((chipHal_HalVarIdx >> 5) == 2UL) && ((1UL << (chipHal_HalVarIdx & 0x1f)) & 0x00000ec1UL) )) /* ChipHal: GB100 | GB102 | GB10B | GB202 | GB203 | GB205 | GB206 | GB207 */ 
         {
             pThis->__kbusGetPFBar1Spa__ = &kbusGetPFBar1Spa_GB100;
+        }
+        else if (( ((chipHal_HalVarIdx >> 5) == 1UL) && ((1UL << (chipHal_HalVarIdx & 0x1f)) & 0x01f00000UL) )) /* ChipHal: AD102 | AD103 | AD104 | AD106 | AD107 */ 
+        {
+            pThis->__kbusGetPFBar1Spa__ = &kbusGetPFBar1Spa_AD102;
         }
         // default
         else

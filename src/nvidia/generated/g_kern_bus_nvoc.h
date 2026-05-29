@@ -2782,6 +2782,8 @@ static inline NvU32 kbusGetEccCounts_4a4dee(struct OBJGPU *pGpu, struct KernelBu
 
 NV_STATUS kbusGetPFBar1Spa_GB100(struct OBJGPU *pGpu, struct KernelBus *pKernelBus, NvU64 *pSpaValue);
 
+NV_STATUS kbusGetPFBar1Spa_AD102(struct OBJGPU *pGpu, struct KernelBus *pKernelBus, NvU64 *pSpaValue);
+
 static inline NV_STATUS kbusGetPFBar1Spa_46f6a7(struct OBJGPU *pGpu, struct KernelBus *pKernelBus, NvU64 *pSpaValue) {
     return NV_ERR_NOT_SUPPORTED;
 }
