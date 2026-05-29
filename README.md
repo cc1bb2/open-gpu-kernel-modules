@@ -1,6 +1,6 @@
 # NVIDIA driver 570.148.08-p2p with GPUDirect RDMA for 4080
 
-This allows using GDR on 4080 GPUs with the 570.148.08-p2p driver version.
+This allows using GDR on AD10x (RTX 40xx / Ada Lovelace) GPUs with the 570.148.08-p2p driver version.
 
 ## How to Build
 
